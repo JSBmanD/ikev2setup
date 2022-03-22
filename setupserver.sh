@@ -37,7 +37,7 @@ echo "#global configuration IPsec
 #chron logger
 config setup
     charondebug="ike 1, knl 1, cfg 0"
-    uniqueids=no
+    uniqueids=never
 
 #define new ipsec connection
 conn jsb-ikev-vpn
@@ -67,6 +67,9 @@ conn jsb-ikev-vpn
 echo "# ipsec.secrets - strongSwan IPsec secrets file
 : RSA \"privkey.pem\"
 $USERNAME : EAP \"$PASSWORD\"" > /etc/strongswan/ipsec.secrets
+echo "duplicheck {
+    load = no
+}" > /etc/strongswan/strongswan.d/charon/duplicheck.conf
 systemctl start strongswan
 systemctl enable strongswan
 firewall-cmd --zone=public --permanent --add-rich-rule='rule protocol value="esp" accept'
