@@ -24,6 +24,7 @@ clear
 sudo ufw enable
 sudo ufw allow http
 sudo ufw allow https
+sudo ufw allow 22
 sudo ufw reload
 sudo certbot certonly --rsa-key-size 4096 --standalone --agree-tos --no-eff-email --email ceo@$DOMAIN -d $DOMAIN
 echo "0 0,12 * * * root python3 -c 'import random; import time; time.sleep(random.random() * 3600)' && certbot renew -q" | sudo tee -a /etc/crontab > /dev/null
