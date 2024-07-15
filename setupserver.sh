@@ -1,5 +1,5 @@
 #!/bin/bash
-echo "Script made by JSBmanD for CentOS 7 via help of https://www.howtoforge.com/. Press ENTER to continue."
+echo "Script made by JSBmanD for Ubuntu 24.04. Press ENTER to continue."
 read KEY
 echo "Enter your domain name and press [ENTER]: "
 read DOMAIN
@@ -16,27 +16,25 @@ echo "Press ENTER to continue or CTRL+Z to abort"
 read KEY
 clear
 echo "Setup started"
-yum -y install epel-release
-yum -y install strongswan
-yum -y install certbot
-yum -y install firewalld
+sudo apt update
+sudo apt -y install strongswan
+sudo apt -y install certbot
+sudo apt -y install ufw
 clear
-systemctl start firewalld
-systemctl enable firewalld
-systemctl status firewalld
-firewall-cmd --add-service=http --permanent
-firewall-cmd --add-service=https --permanent
-firewall-cmd --reload
-certbot certonly --rsa-key-size 4096 --standalone --agree-tos --no-eff-email --email ceo@$DOMAIN -d $DOMAIN
-echo "0 0,12 * * * root python -c 'import random; import time; time.sleep(random.random() * 3600)' && certbot renew -q" | sudo tee -a /etc/crontab > /dev/null
-cp /etc/letsencrypt/live/$DOMAIN/fullchain.pem /etc/strongswan/ipsec.d/certs/
-cp /etc/letsencrypt/live/$DOMAIN/privkey.pem /etc/strongswan/ipsec.d/private/
-cp /etc/letsencrypt/live/$DOMAIN/chain.pem /etc/strongswan/ipsec.d/cacerts/
-mv /etc/strongswan/ipsec.conf /etc/strongswan/ipsec.conf.asli
+sudo ufw enable
+sudo ufw allow http
+sudo ufw allow https
+sudo ufw reload
+sudo certbot certonly --rsa-key-size 4096 --standalone --agree-tos --no-eff-email --email ceo@$DOMAIN -d $DOMAIN
+echo "0 0,12 * * * root python3 -c 'import random; import time; time.sleep(random.random() * 3600)' && certbot renew -q" | sudo tee -a /etc/crontab > /dev/null
+sudo cp /etc/letsencrypt/live/$DOMAIN/fullchain.pem /etc/ipsec.d/certs/
+sudo cp /etc/letsencrypt/live/$DOMAIN/privkey.pem /etc/ipsec.d/private/
+sudo cp /etc/letsencrypt/live/$DOMAIN/chain.pem /etc/ipsec.d/cacerts/
+sudo mv /etc/ipsec.conf /etc/ipsec.conf.bak
 echo "#global configuration IPsec
 #chron logger
 config setup
-    charondebug="ike 1, knl 1, cfg 0"
+    charondebug=\"ike 1, knl 1, cfg 0\"
     uniqueids=never
 
 #define new ipsec connection
@@ -63,26 +61,23 @@ conn jsb-ikev-vpn
     rightsourceip=10.15.1.0/24
     rightdns=1.1.1.1,8.8.8.8
     rightsendcert=never
-    eap_identity=%identity" > /etc/strongswan/ipsec.conf
+    eap_identity=%identity" | sudo tee /etc/ipsec.conf
 echo "# ipsec.secrets - strongSwan IPsec secrets file
 : RSA \"privkey.pem\"
-$USERNAME : EAP \"$PASSWORD\"" > /etc/strongswan/ipsec.secrets
+$USERNAME : EAP \"$PASSWORD\"" | sudo tee /etc/ipsec.secrets
 echo "duplicheck {
     load = no
-}" > /etc/strongswan/strongswan.d/charon/duplicheck.conf
-systemctl start strongswan
-systemctl enable strongswan
-firewall-cmd --zone=public --permanent --add-rich-rule='rule protocol value="esp" accept'
-firewall-cmd --zone=public --permanent --add-rich-rule='rule protocol value="ah" accept'
-firewall-cmd --zone=public --permanent --add-port=500/udp
-firewall-cmd --zone=public --permanent --add-port=4500/udp
-firewall-cmd --zone=public --permanent --add-service="ipsec"
-firewall-cmd --zone=public --permanent --add-masquerade
-firewall-cmd --reload
+}" | sudo tee /etc/strongswan.d/charon/duplicheck.conf
+sudo systemctl start strongswan
+sudo systemctl enable strongswan
+sudo ufw allow 500/udp
+sudo ufw allow 4500/udp
+sudo ufw allow ipsec
+sudo ufw reload
 echo "net.ipv4.ip_forward = 1
 net.ipv4.conf.all.accept_redirects = 0
-net.ipv4.conf.all.send_redirects = 0" > /etc/sysctl.conf
-systemctl restart strongswan
+net.ipv4.conf.all.send_redirects = 0" | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
 clear
 echo "Setup done"
 echo "Press ENTER key to show config or CTRL+Z to abort"
@@ -90,9 +85,9 @@ read KEY
 clear
 echo "Config:"
 echo "IPsec:"
-cat /etc/strongswan/ipsec.conf
+cat /etc/ipsec.conf
 echo "IPsecrets:"
-cat /etc/strongswan/ipsec.secrets
+cat /etc/ipsec.secrets
 echo "Sysctl:"
 cat /etc/sysctl.conf
 echo "Done! Press ENTER to finish."
