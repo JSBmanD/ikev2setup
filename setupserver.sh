@@ -79,7 +79,6 @@ echo "net.ipv4.ip_forward = 1
 net.ipv4.conf.all.accept_redirects = 0
 net.ipv4.conf.all.send_redirects = 0" | sudo tee -a /etc/sysctl.conf
 sudo sysctl -p
-clear
 echo "Setup done"
 echo "Press ENTER key to show config or CTRL+Z to abort"
 read KEY
